@@ -1,0 +1,1 @@
+/home/adrian/megoldas_ws/devel/.private/megoldas_zala23/lib/pkgconfig/megoldas_zala23.pc

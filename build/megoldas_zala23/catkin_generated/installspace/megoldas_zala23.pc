@@ -1,0 +1,8 @@
+prefix=/home/adrian/megoldas_ws/install
+
+Name: megoldas_zala23
+Description: Description of megoldas_zala23
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

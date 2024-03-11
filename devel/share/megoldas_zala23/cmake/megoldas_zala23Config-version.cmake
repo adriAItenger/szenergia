@@ -1,0 +1,1 @@
+/home/adrian/megoldas_ws/devel/.private/megoldas_zala23/share/megoldas_zala23/cmake/megoldas_zala23Config-version.cmake
