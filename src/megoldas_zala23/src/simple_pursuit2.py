@@ -36,7 +36,7 @@ marker_blue = Marker()
 marker_arrayblue = MarkerArray()
 
 marker_points = Marker()
-marker_points.header.frame_id = "laser" # "laser"
+marker_points.header.frame_id = "base_link" # "laser"
 marker_points.type = Marker.SPHERE_LIST
 marker_points.action = marker_points.MODIFY
 marker_points.color.r = 0.0
@@ -81,17 +81,25 @@ def calcPointPos(range, angle):
     y1 = range * math.sin(angle)
     return x1, y1
 
-def getDistance2(ranges, angles):
+def getDistance(ranges, angles):
     global marker_points
     if(len(ranges) > 50):
-        center1_min_index = np.where(math.radians(160) < angles)[0][0]
+        center1_min_index = np.where(math.radians(120) < angles)[0][0]
         center1_max_index = np.where(math.radians(179.9) < angles)[0][0]
         tmp1 = np.arange(center1_min_index, center1_max_index, 1)
         center2_min_index = np.where(math.radians(-179.9) < angles)[0][0]
-        center2_max_index = np.where(math.radians(-160) < angles)[0][0]
+        center2_max_index = np.where(math.radians(-120) < angles)[0][0]
         tmp2 = np.arange(center2_min_index, center2_max_index, 1)
         tmp = np.concatenate((tmp1, tmp2))
         max_x = -10.0
+        p1,p2,i,j = getFarthestNeighbours(tmp,ranges)
+        # p = Point()
+        # q = Point()
+        # p.x, p.y = calcPointPos(p1,angles[j])
+        # q.x, q.y = calcPointPos(p2,angles[i])
+        # p.z = q.z = 1.0
+        # ujmarker.points.append(p)
+        # ujmarker.points.append(q)
         for t in tmp:
             point = Point()
             point.x, point.y = calcPointPos(ranges[t], angles[t])
@@ -120,53 +128,47 @@ def getDistance2(ranges, angles):
         distance = 0.4
     return distance
 
-def getDistance(ranges,angles):
-    global marker_points
-    if(len(ranges) > 50):
-        p_index,q_index=getFarthestNeighbours(filterInf(ranges),angles)
-        p=Point()
-        q=Point()
-        p.x,p.y=calcPointPos(ranges[p_index],angles[p_index])
-        q.x,q.y=calcPointPos(ranges[q_index],angles[q_index])
-        p.z,q.z = 1.5,1.5
-        ujmarker.points.append(p)
-        ujmarker.points.append(q)
-        r=Point() #a közelebbi pont x kordinátájára kell az távolabbi és az ő y-ának különbségének fele(rajz)
-        if ranges[p_index]<ranges[q_index]:
-            r.x=p.x
-            r.y=abs(q.y-p.y)/2 #nem biztos, hogy pont a fele kell, később adaptívvá is tehetjük(szög és táv függvényében)
-        else:
-            r.x=q.x
-            r.y=abs(p.y-q.y)/2
-            # most erre kellene megkeresni a távot és a kormányszöget
-            #azt is meg kell oldani, hogy csak előre nézzen, mikor a pontokat keresi update: farthestneighbours fileban elvileg javitottam
-        distance=r.x
-        r.z=1.5
-        #ujmarker.points.append(r)
-        return distance
-
-def filterInf(ranges):
+def filterInf(tmp):
     filteredranges=[]
-    for i in range(len(ranges)):
-        if not math.isinf(ranges[i]):
-            filteredranges.append([i, ranges[i]])
+    for i in range(len(tmp)):
+        if not math.isinf(tmp[i]):
+            filteredranges.append(tmp[i])
 
     return filteredranges
 
-def getFarthestNeighbours(filteredranges,angles):
+def getFarthestNeighbours(distances,ranges):
     p1, p2 = 0, 0
     maxdiff = 0
-    for i in range(len(filteredranges) - 1):
-        if abs(filteredranges[i][1] - filteredranges[i+1][1]) > maxdiff and -0.5<angles[i]<0.5: #itt a kettot es az 5-ot at kell irni ugy,
-            p1 = filteredranges[i][0]                                                       #hogy elore nezzen 90 fokot mondjuk.
-            p2 = filteredranges[i+1][0]
-            maxdiff = abs(filteredranges[i][1] - filteredranges[i+1][1])
+    for i in range(len(distances)-1):
+        if math.isinf(ranges[i]):
+            continue
+        else:   
+            for j in range(len(distances)):
+                if math.isinf(ranges[j]):
+                    continue
+                else:
+                    if abs(ranges[i] - ranges[j]) > maxdiff:
+                        p1 = ranges[i]                                                       
+                        p2 = ranges[j]
+                        pi = distances[i]
+                        pj = distances[j]
+                        maxdiff = abs(ranges[i] - ranges[j])
+    return p1,p2,pi,pj
 
-    if abs(filteredranges[0][1] - filteredranges[-1][1]) > maxdiff:
-        p1 = filteredranges[-1][0]
-        p2 = filteredranges[0][0]
-        maxdiff = abs(filteredranges[0][1] - filteredranges[-1][1])
-    return p1, p2
+
+        # print(i)
+        # print(angles[i])
+    #     if not math.isinf(ranges[i]) and  not math.isinf(ranges[i+1]):
+    #         if abs(ranges[i] - ranges[i+1]) > maxdiff:
+    #             p1 = ranges[i]                                                       
+    #             p2 = ranges[i+1]
+    #             maxdiff = abs(ranges[i] - ranges[i+1])
+
+    #         if abs(ranges[i+1] - ranges[i]) > maxdiff:
+    #             p1 = ranges[-1]
+    #             p2 = ranges[0]
+    #             maxdiff = abs(ranges[0] - ranges[-1])
+    # return p1, p2
 
 
 def getAngle(ranges, angles):
@@ -271,7 +273,6 @@ def followSimple(data):
     marker_blue.pose.orientation.y = 0.0
     marker_blue.pose.orientation.z = 0.0
     marker_blue.pose.orientation.w = 1.0
-    print(len(marker_blue.points))
     marker_arrayblue.markers.append(marker_blue)
     bluepoints.publish(marker_arrayblue)
     ujmarkerarray = MarkerArray()
