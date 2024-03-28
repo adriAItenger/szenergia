@@ -1,4 +1,0 @@
-[35m[1mScanning dependencies of target path_and_steering[0m
-[ 50%] [32mBuilding CXX object CMakeFiles/path_and_steering.dir/src/path_and_steering.cpp.o[0m
-[100%] [32m[1mLinking CXX executable /home/adrian/megoldas_ws/devel/.private/megoldas_zala23/lib/megoldas_zala23/path_and_steering[0m
-[100%] Built target path_and_steering
