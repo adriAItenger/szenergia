@@ -84,15 +84,15 @@ def calcPointPos(range, angle):
 def getDistance(ranges, angles):
     global marker_points
     if(len(ranges) > 50):
-        center1_min_index = np.where(math.radians(120) < angles)[0][0]
+        center1_min_index = np.where(math.radians(60) < angles)[0][0]
         center1_max_index = np.where(math.radians(179.9) < angles)[0][0]
         tmp1 = np.arange(center1_min_index, center1_max_index, 1)
         center2_min_index = np.where(math.radians(-179.9) < angles)[0][0]
-        center2_max_index = np.where(math.radians(-120) < angles)[0][0]
+        center2_max_index = np.where(math.radians(-60) < angles)[0][0]
         tmp2 = np.arange(center2_min_index, center2_max_index, 1)
         tmp = np.concatenate((tmp1, tmp2))
         max_x = -10.0
-        p1,p2,i,j = getFarthestNeighbours(tmp,ranges)
+        # p1,p2,i,j = getFarthestNeighbours(tmp,ranges)
         # p = Point()
         # q = Point()
         # p.x, p.y = calcPointPos(p1,angles[j])
@@ -112,7 +112,14 @@ def getDistance(ranges, angles):
             if not math.isinf(point.x):
                 point.z = 1
                 marker_blue.points.append(point)
-            
+        p1, p2 = getFarthestNeighbours(marker_blue.points)
+        ujmarker.points.append(p1)
+        ujmarker.points.append(p2)
+        p3 = Point()
+        p3.x = (p1.x+p2.x)/2
+        p3.y = (p1.y+p2.y)/2
+        p3.z = 1
+        ujmarker.points.append(p3)
         if math.isinf(max_x):
             max_x = -5.0
         # within 40 cm reverse - tolatas    
@@ -128,6 +135,20 @@ def getDistance(ranges, angles):
         distance = 0.4
     return distance
 
+def getFarthestNeighbours(points):
+    p1, p2 = 0, 0
+    maxdiff = 0
+    prev_point = None
+    for i in points:
+        if prev_point is not None:
+            if math.sqrt((prev_point.x-i.x)**2+(prev_point.y-i.y)**2) > maxdiff:
+                p1 = i
+                p2 = prev_point
+                maxdiff = math.sqrt((prev_point.x-i.x)**2+(prev_point.y-i.y)**2)
+        prev_point = i
+    return p1,p2
+
+
 def filterInf(tmp):
     filteredranges=[]
     for i in range(len(tmp)):
@@ -136,9 +157,10 @@ def filterInf(tmp):
 
     return filteredranges
 
-def getFarthestNeighbours(distances,ranges):
+def getFarthestNeighbours2(distances,ranges):
     p1, p2 = 0, 0
     maxdiff = 0
+
     for i in range(len(distances)-1):
         if math.isinf(ranges[i]):
             continue
